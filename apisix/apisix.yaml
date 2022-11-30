@@ -1,0 +1,24 @@
+routes:
+  - uri: /httpbin/*
+    plugins:
+      heimdall:
+        conf: "{\"redis_nodes\":[\"redis://host.docker.internal:6379/\"]}"
+      proxy-rewrite:
+        regex_uri: ["^/httpbin/(.*)", "/$1"]
+    upstream:
+        nodes:
+            "httpbin.org:80": 1
+        type: roundrobin
+  - uri: /mocking
+    plugins:
+      heimdall:
+        conf: "{\"body\":\"hello world\", \"http_status\":200}"
+      mocking:
+        # radix.json 满足 https://github.com/api7/lua-resty-radixtree 构造要求
+        response_example: "[{\"paths\":[\"/httpbin/get*\"],\"metadata\":{\"roles\":[\"|u|\"]}},{\"paths\":[\"/httpbin/post*\"],\"metadata\":{\"roles\":[\"|u|\",\"|v|\"]}},{\"paths\":[\"/httpbin/delete*\"],\"metadata\":{\"roles\":[\"|v|\"]}}]"
+    upstream:
+        nodes:
+            "httpbin.org:80": 1
+        type: roundrobin
+
+#END
